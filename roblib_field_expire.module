@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Scans inventory item content type nodes which are flagged as being chemicals and looks for changes to the
- * MSDS file and MSDS link URL fields (presave) and updates node expiry date as needed.
+ * Scans chemical inventory item content types and looks for changes to the MSDS file and updates node expiry date as needed.
  */
 
 /**
@@ -21,8 +20,7 @@
 function roblib_field_expire_help($path, $arg) {
   switch ($path) {
     case "admin/help#roblib_field_expire":
-      return '<p>' . t("Scans inventory item content type nodes which are flagged as being chemicals and " .
-                         "looks for changes to the MSDS file and MSDS link URL fields (presave) and " .
+      return '<p>' . t("Scans chemical inventory item content types and looks for changes to the MSDS file and " .
                            "updates node expiry date as needed.") . '</p>';
       break;
   }
@@ -31,30 +29,21 @@ function roblib_field_expire_help($path, $arg) {
 /**
  * Implements hook_node_presave().
  *
- * Scans for MSDS field changes and updates the node expiry date as needed.
+ * Scans chemical inventory item content types and looks for changes to the MSDS file and updates node expiry date as needed.
  *
  * @param node
  *   Drupal's node array.
  */
 function roblib_field_expire_node_presave($node) {
 
-  // Only concerned with inventory item content types and of those only chemical inventory items
-  if($node->type == 'inventory_item' AND $node->field_is_chemical['und'][0]['value'] == 1) {
+  // Only concerned with existing chemical inventory item content types
+  if((! $node->is_new) AND $node->type == 'chemical_inventory_item') {
 
     $original_msds_file = $node->original->field_msds_url;
     $new_msds_file = $node->field_msds_url;
-    $original_msds_document_link = $node->original->field_msds_document_link;
-    $new_msds_document_link = $node->field_msds_document_link;
-
-    $msds_file_change = FALSE;
-    $msds_url_change = FALSE;
-    if($original_msds_file['und'][0]['fid'] != $new_msds_file['und'][0]['fid'])
-      $msds_file_change = TRUE;
-    if($original_msds_document_link['und'][0]['url'] != $new_msds_document_link['und'][0]['url'])
-      $msds_url_change = TRUE;
 
     // Reset node expire date only when MSDS file or URL fields are changed
-    if($msds_file_change OR $msds_url_change) {
+    if($original_msds_file[LANGUAGE_NONE][0]['fid'] != $new_msds_file[LANGUAGE_NONE][0]['fid']) {
 
       $today_date = date('Y-m-d', time());
       $temp = variable_get('node_expire_ntypes', '');
@@ -68,18 +57,7 @@ function roblib_field_expire_node_presave($node) {
       // Reset expired flag in case the node had been expired
       $node->expired = 0;
 
-      $detect_change_message = '';
-      if($msds_file_change AND $msds_url_change) {
-        $detect_change_message = 'MSDS file and URL change detected.';
-      }
-      elseif($msds_file_change) {
-        $detect_change_message = 'MSDS file change detected.';
-      }
-      else {
-        $detect_change_message = 'MSDS URL change detected.';
-      }
-
-      drupal_set_message($detect_change_message . ' Resetting expire date to ' . $default_expire_adjustment .
+      drupal_set_message('MSDS file change detected.' . ' Resetting expire date to ' . $default_expire_adjustment .
         ' from today.', 'status');
     }
     else {

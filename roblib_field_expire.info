@@ -1,5 +1,5 @@
 name = Roblib Field Expire
-description = Scans inventory item content type nodes which are flagged as being chemicals and looks for changes to the MSDS file and MSDS link URL fields (presave) and updates node expiry date as needed.
+description = Scans chemical inventory item content types and looks for changes to the MSDS file and updates node expiry date as needed.
 core = 7.x
 package = "Roblib Extras"
 files[] = roblib_field_expire.info
